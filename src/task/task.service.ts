@@ -2,6 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { Task } from './types/task.type';
 import { TaskStatus } from './types/task-status.type';
 import { v4 as uuidv4 } from 'uuid';
+import { CreateTaskDto } from './dto/create-task.dto';
+import { UpdateTaskDto } from './dto/update-task.dto';
 @Injectable()
 export class TaskService {
   tasks: Task[] = [];
@@ -10,9 +12,9 @@ export class TaskService {
     return this.tasks;
   }
 
-  createTask(task): Task {
+  createTask(createTaskDto: CreateTaskDto): Task {
     const newTask: Task = {
-      ...task,
+      ...createTaskDto,
       id: uuidv4(),
       status: TaskStatus.OPEN,
     };
@@ -35,12 +37,12 @@ export class TaskService {
     this.tasks = this.tasks.filter((task) => task.id !== id);
   }
 
-  updateTask(id: string, task): Task {
+  updateTask(id: string, updateTaskDto: UpdateTaskDto): Task {
     const taskToModify: Task = this.getTaskById(id);
 
     const modifiedTask: Task = {
       ...taskToModify,
-      ...task,
+      ...updateTaskDto,
     };
 
     this.deleteTask(id);
