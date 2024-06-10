@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Task } from './task.entity';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
@@ -6,8 +10,6 @@ import { TaskRepository } from './task.repository';
 @Injectable()
 export class TaskService {
   constructor(private taskRepository: TaskRepository) {}
-
-  tasks: Task[] = [];
 
   getAllTasks(): Promise<Task[]> {
     return this.taskRepository.getAllTasks();
@@ -21,9 +23,12 @@ export class TaskService {
     return this.taskRepository.getTaskById(id);
   }
 
-  deleteTask(id: string): void {
-    this.getTaskById(id);
-    this.tasks = this.tasks.filter((task) => task.id !== id);
+  async deleteTask(id: string): Promise<void> {
+    const result = await this.taskRepository.delete({ id });
+
+    if (result.affected === 0) {
+      throw new NotFoundException(`Task with id ${id} not found`);
+    }
   }
 
   async updateTask(id: string, updateTaskDto: UpdateTaskDto): Promise<Task> {
@@ -34,10 +39,11 @@ export class TaskService {
       ...updateTaskDto,
     };
 
-    this.deleteTask(id);
-
-    this.tasks.push(modifiedTask);
-
-    return modifiedTask;
+    try {
+      await this.taskRepository.save(modifiedTask);
+      return modifiedTask;
+    } catch (error) {
+      throw new BadRequestException('Task could not be updated');
+    }
   }
 }
